@@ -1,7 +1,7 @@
-import { Box, Button, HStack, Image, Input, Stack, Text } from '@chakra-ui/react';
+import { Box, Button, HStack, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Stack, Text, useDisclosure } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react'
 import domtoimage from 'dom-to-image';
-//import { saveAs } from 'file-saver';
+import { saveAs } from 'file-saver';
 
 const Meme = () => {
   const canvasRef = useRef(null);
@@ -11,6 +11,10 @@ const Meme = () => {
   const [fontSize, setFontSize] = useState(36);
   const [color, setColor] = useState(0);
   const [editableBox, setEditableBox] = useState<null | number>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [previewImg, setPreviewImg] = useState<null | string>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [editMode, setEditMode] = useState(true);
 
   useEffect(() => {
     getImage();
@@ -63,7 +67,6 @@ const Meme = () => {
   const handleDrop = (event:any) => {
     event.preventDefault();
     const canvas = document.getElementById('meme-app');
-    console.log(canvas);
     const el_index = event.dataTransfer.getData('text/plain');
     const el = boxRefs.current[el_index];
     let x = event.clientX;
@@ -84,21 +87,48 @@ const Meme = () => {
   }
 
 
-  const handleDownload = () => {
+  const handlePreview = () => {
     const meme = document.getElementById('meme-app');
-    console.log(meme);
+    setEditMode(false);
     if(meme){
       domtoimage.toBlob(meme)
       .then(function (blob) {
-        console.log(URL.createObjectURL(blob));
+        setBlob(blob);
+        //console.log(URL.createObjectURL(blob));
+        setPreviewImg(URL.createObjectURL(blob));
         //saveAs(blob, "image.jpg");
+        onOpen();
       });
+    }
+  }
+
+  const handleDownload = () => {
+    if(blob){
+      saveAs(blob, "image.jpg");
     }
   }
 
 
   return (
     <HStack>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Preview</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+          <Image 
+            src={previewImg ? previewImg : ''} 
+          />
+          </ModalBody>
+
+          <ModalFooter>
+            <Button colorScheme='blue' mr={3} onClick={handleDownload}>
+              Download
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
       <Stack alignSelf={'flex-start'}>
           <Input type='file'  onChange={(event) => handleUpload(event)} />
           <Box>
@@ -112,11 +142,11 @@ const Meme = () => {
           <Box>
             <Text textAlign={'start'} fontSize={'md'}>Text Color</Text>
           <HStack>
-            <Box onClick={() => setColor(0)} height={'25px'} aspectRatio={'1'} border={'1px'} borderColor={'black'} background={'black'}></Box>
-            <Box onClick={() => setColor(1)} height={'25px'} aspectRatio={'1'} border={'1px'} borderColor={'black'}></Box>
+            <Box onClick={() => setColor(0)} height={'25px'} aspectRatio={'1'} border={'2px'} borderColor={color === 0 ? 'green':'black'} background={'black'}></Box>
+            <Box onClick={() => setColor(1)} height={'25px'} aspectRatio={'1'} border={'2px'} borderColor={color === 1 ? 'green':'black'}></Box>
           </HStack>
           </Box>
-          <Button onClick={() => handleDownload()}>Download</Button>
+          <Button onClick={() => handlePreview()}>Download</Button>
           <Button onClick={() => addBox()}>Add TextBox</Button>
       </Stack>
       {image ? 
@@ -144,8 +174,7 @@ const Meme = () => {
         minW={'100px'} 
         minH={'1.5em'}
         key={idx} 
-        border={'1px'} 
-        borderColor={'red'} 
+        background={editMode ? 'rgba(0, 0, 0, 0.22)':''}
         position={'absolute'}
         top={`${idx}00px`}
         contentEditable={editableBox === idx}
