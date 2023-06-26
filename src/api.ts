@@ -12,7 +12,7 @@ export const getStudents = async (number = 20) => {
   }
 };
 
-export const getSingleStudents = async (uuid=null) => {
+export const getSingleStudents = async () => {
   const data = localStorage.getItem('s');
   const dataParsed = JSON.parse(data!);
   console.log(dataParsed)
