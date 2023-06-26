@@ -5,6 +5,14 @@ main{
   padding-top:0
 }
 
+nav a{
+  margin-right:50px;
+}
+
+a.active{
+  font-weight:900
+}
+
 #meme-app{
   font-family: 'Impact', sans-serif;
   font-family: 'Impacted', sans-serif;
